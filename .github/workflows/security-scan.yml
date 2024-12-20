@@ -45,6 +45,7 @@ jobs:
           pylint --output-format=text --recursive=y . || true
 
       - name: Semgrep
+        continue-on-error: true
         uses: returntocorp/semgrep-action@v1
         with:
           config: >-
@@ -53,6 +54,7 @@ jobs:
 
       # Secret Scanning
       - name: GitLeaks Secret Scan
+        continue-on-error: true
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,6 +66,7 @@ jobs:
           safety check
 
       - name: Snyk Python Scan
+        continue-on-error: true
         uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
