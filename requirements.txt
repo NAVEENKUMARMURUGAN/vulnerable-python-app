@@ -1,0 +1,6 @@
+flask==0.12.2
+pyjwt==1.5.0
+requests==2.18.0
+sqlalchemy==1.1.0
+sqlite3==2.6.0
+pickle5==0.0.11
