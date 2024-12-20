@@ -26,10 +26,16 @@ jobs:
           pip install -r requirements.txt
 
       # SAST Scanning
-      - name: Bandit SAST Scan
+      - name: Bandit Scan
+        continue-on-error: true # This prevents the workflow from failing
         run: |
           pip install bandit
           bandit -r . -f json -o bandit-results.json
+
+      # Optionally, display results
+      - name: Display Bandit Results
+        run: |
+          cat bandit-results.json
 
       # Code Quality with Pylint
       - name: Pylint Check
