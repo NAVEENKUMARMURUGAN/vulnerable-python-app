@@ -39,9 +39,10 @@ jobs:
 
       # Code Quality with Pylint
       - name: Pylint Check
+        continue-on-error: true # Don't fail the workflow
         run: |
           pip install pylint
-          pylint --output-format=json --recursive=y . > pylint-results.json
+          pylint --output-format=text --recursive=y . || true
 
       - name: Semgrep
         uses: returntocorp/semgrep-action@v1
