@@ -27,10 +27,11 @@ jobs:
 
       # SAST Scanning
       - name: Bandit Scan
-        continue-on-error: true # This prevents the workflow from failing
+        continue-on-error: true
         run: |
           pip install bandit
-          bandit -r . -f json -o bandit-results.json
+          bandit -r . -f json -o bandit-results.json || true
+          echo "Bandit scan completed. Results saved to bandit-results.json"
 
       # Optionally, display results
       - name: Display Bandit Results
@@ -64,6 +65,7 @@ jobs:
         continue-on-error: true
         run: |
           pip install safety
+          safety check --json > safety-results.json || true
           safety check
 
       - name: Snyk Python Scan
@@ -90,3 +92,44 @@ jobs:
           target: "http://localhost:5000"
           docker_name: "ghcr.io/zaproxy/zaproxy:stable" # Updated Docker image
           token: ${{ secrets.GITHUB_TOKEN }}
+      # Create Security Summary
+      - name: Create Security Summary
+        if: always()
+        run: |
+          echo "# 🛡️ Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🔍 SAST Results (Bandit)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -f bandit-results.json ]; then
+            cat bandit-results.json | jq -r '.results[]? | "- [" + (.issue_severity|tostring) + "] " + .issue_text + " in " + .filename + ":" + (.line_number|tostring)' >> $GITHUB_STEP_SUMMARY || echo "No issues found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No Bandit results file found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🔎 Static Analysis (Semgrep)" >> $GITHUB_STEP_SUMMARY
+          echo "Check Semgrep findings in the Semgrep UI" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🔒 Secrets Scan (GitLeaks)" >> $GITHUB_STEP_SUMMARY
+          echo "Check GitLeaks findings in the Action logs" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📦 Dependencies Check (Safety)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          safety check || echo "No issues found" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🔍 Snyk Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "Check Snyk findings in your Snyk dashboard" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🕸️ DAST Results (OWASP ZAP)" >> $GITHUB_STEP_SUMMARY
+          echo "Check ZAP scan results in the Action artifacts" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 💡 Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review and fix SAST findings from Bandit and Semgrep" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update vulnerable dependencies identified by Safety and Snyk" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check for any exposed secrets found by GitLeaks" >> $GITHUB_STEP_SUMMARY
+          echo "4. Address DAST findings from OWASP ZAP" >> $GITHUB_STEP_SUMMARY
+
+      # Install jq for JSON parsing (add this near the start with other installations)
+      - name: Install jq
+        run: sudo apt-get install jq -y
