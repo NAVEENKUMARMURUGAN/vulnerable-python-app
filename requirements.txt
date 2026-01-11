@@ -3,3 +3,4 @@ pyjwt==1.5.0
 requests==2.18.0
 sqlalchemy==1.1.0
 markupsafe==2.0.1
+werkzeug>=3.1.5 # not directly required, pinned by Snyk to avoid a vulnerability
